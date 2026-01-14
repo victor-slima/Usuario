@@ -6,6 +6,7 @@ import com.victor.usuario.infraestructure.entity.Usuario;
 import com.victor.usuario.infraestructure.exceptions.ConflictException;
 import com.victor.usuario.infraestructure.exceptions.ResourceNotFoundException;
 import com.victor.usuario.infraestructure.repository.UsuarioRepository;
+import com.victor.usuario.infraestructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public UsuarioDTO salvarUsuario(UsuarioDTO usuarioDTO){
         emailExiste(usuarioDTO.getEmail());
@@ -45,5 +47,19 @@ public class UsuarioService {
 
     public void deletaUsuarioPorEmail(String email){
         usuarioRepository.deleteByEmail(email);
+    }
+
+    // Extrai o e-mail do usuario atraves to token
+    public UsuarioDTO atualizarDadosUsuario(String token, UsuarioDTO usuarioDTO){
+        // Aqui buscamos o email do usuario atraves do token (tirar a obrigatoriedade do email)
+        String email = jwtUtil.extractEmailToken(token.substring(7));
+        // Criptografia de senha.
+        usuarioDTO.setSenha(usuarioDTO.getSenha() != null ? passwordEncoder.encode(usuarioDTO.getSenha()) : null);
+        // Aqui buscamos os dados do usuario no banco de dados.
+        Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Email nao existe no banco de dados: " + email));
+        // Mesclou os dados que recebemos na requisicao DTO com os dados do banco de dados.
+        Usuario usuario = usuarioConverter.updateUsuario(usuarioDTO, usuarioEntity);
+        // Salvamos os dados do usuario convertido e depois pegamos o retorno e convertemos novamente para DTO.
+        return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
     }
 }
