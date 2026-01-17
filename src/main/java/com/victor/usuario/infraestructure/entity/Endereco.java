@@ -1,10 +1,7 @@
 package com.victor.usuario.infraestructure.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
@@ -12,6 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "endereco")
+@Builder
 public class Endereco {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,4 +26,6 @@ public class Endereco {
     private String estado;
     @Column(name = "cep", length = 9)
     private String cep;
+    @Column(name = "usuario_id")
+    private Long usuarioId;
 }
